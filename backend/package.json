@@ -1,0 +1,15 @@
+{
+  "name": "wire-flies-backend",
+  "version": "0.0.1",
+  "main": "server/app.js",
+  "author": "WireFlies",
+  "license": "MIT",
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "gulp": "^3.9.1",
+    "gulp-mocha": "^5.0.0",
+    "mocha": "^5.0.0",
+    "rewire": "^3.0.2",
+    "sinon": "^4.2.2"
+  }
+}
