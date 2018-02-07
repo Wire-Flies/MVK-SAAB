@@ -1,7 +1,3 @@
-const email = "Saab2@blufffmail.com";
-const password = "Saab2123";
-var userId, anomalies;
-
 /**
  * Initiates our firebase connection
  */
