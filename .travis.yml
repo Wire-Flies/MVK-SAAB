@@ -1,0 +1,8 @@
+language: node_js
+node_js:
+  - "6"
+
+install:
+  - cd backend && npm install && cd ..
+
+script: backend/travis_ci_runner.sh
