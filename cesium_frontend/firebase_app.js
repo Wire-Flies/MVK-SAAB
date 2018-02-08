@@ -38,6 +38,7 @@ function getDataFirebase(userId) {
     firebase.database().ref('/users/' + userId).once('value')
     .then((snapshot) => {
         anomalies = snapshot.val().anomalies;
+        spawnAnomalies();
         console.log(anomalies);
     });
 }
