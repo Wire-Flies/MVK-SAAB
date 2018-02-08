@@ -1,7 +1,7 @@
 // firebase stuff
 const email = "Saab2@blufffmail.com";
 const password = "Saab2123";
-var userId, anomalies;
+var userId, anomalies, dbRef;
 
 // initiate firebase connection
 initFireBase();
@@ -30,12 +30,6 @@ var anomalySize = 5000;
 var center = Cesium.Cartesian3.fromDegrees(18.0649, 59.33258);
 viewer.camera.lookAt(center, new Cesium.Cartesian3(0.0, 0.0, 5000000.0));
 
-// jump go an initial position
-// -- todo --
-/*viewer.camera.setView({
-    destination : new Cesium.Cartesian3(60, 20, 100)
-})*/
-
 function spawnAnomalies() {
     // spawn anomalies
     for(var anomaly in anomalies) {
@@ -57,7 +51,9 @@ function spawnAnomalies() {
                 scale: anomalySize
             }
         });
+        
         console.log("SPAWNED ENTITY");
     }
+
 }
 
