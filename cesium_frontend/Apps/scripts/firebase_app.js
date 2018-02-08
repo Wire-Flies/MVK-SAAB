@@ -37,14 +37,13 @@ function signInFirebase(email, password) {
 }
 
 /**
- * Retrieves all anomalies from the database
+ * Retrieves all anomalies from the database and calls the spawn function
  * @param {String} userId - User ID used in the firebase db 
  */
 function getDataFirebase(userId) {
     firebase.database().ref('/users/' + userId).once('value')
     .then((snapshot) => {
-        anomalies = snapshot.val().anomalies;
-        spawnAnomalies();
-        console.log(anomalies);
+        spawnAnomalies(snapshot.val().anomalies);
+        console.log(snapshot.val().anomalies);
     });
 }

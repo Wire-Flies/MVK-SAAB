@@ -1,59 +1,76 @@
-// firebase stuff
+// -- FIREBASE --
 const email = "Saab2@blufffmail.com";
 const password = "Saab2123";
-var userId, anomalies, dbRef;
+var userId;
 
 // initiate firebase connection
 initFireBase();
 signInFirebase(email, password);
 
-// cesium stuff
-/* example how to spawn an entity (from their tutorial)
-var viewer = new Cesium.Viewer('cesiumContainer');
-var entity = viewer.entities.add({
-    position : Cesium.Cartesian3.fromDegrees(-123.0744619, 44.0503706),
-    model : {
-        uri : '/Apps/SampleData/models/CesiumGround/Cesium_Ground.gltf'
-    }
-});
-*/
+// -- CESIUM --
+// properties
+var anomalySize = 5000;
+var res = 2;
+var maxZoom = 5000000.0;
+var anomalies, dbRef;
 
+// set up viewer
 var viewer = new Cesium.Viewer('cesiumContainer', {
     sceneMode: Cesium.SceneMode.SCENE2D,
-    sceneModePicker: false
+    sceneModePicker: false,
+    mapProjection : new Cesium.WebMercatorProjection()
 });
-viewer.resolutionScale = 2;
+viewer.resolutionScale = res;
 var scene = viewer.scene;
-var anomalySize = 5000;
 
-// - todo - fix camera zoom, maybe find a better way to lock camera view?
+// center camera and limit zoom
+// - todo - maybe look at a new way to limit what the camera sees
 var center = Cesium.Cartesian3.fromDegrees(18.0649, 59.33258);
-viewer.camera.lookAt(center, new Cesium.Cartesian3(0.0, 0.0, 5000000.0));
+viewer.camera.lookAt(center, new Cesium.Cartesian3(0.0, 0.0, maxZoom));
+scene.screenSpaceCameraController.maximumZoomDistance = maxZoom;
 
-function spawnAnomalies() {
+/**
+ * Spawns every anomaly in the 'anomalies' object based on their longitude,
+ * latitude, altitude and heading.
+ * @param {Object} anomalies - Object with every anomaly to spawn as property
+ */
+function spawnAnomalies(anomalies) {
     // spawn anomalies
-    for(var anomaly in anomalies) {
-        anomaly = anomalies[anomaly];
+    for(var anomalyId in anomalies) {
+        console.log("SPAWNING ENTITY:");
+        var anomaly = anomalies[anomalyId];
         console.log(anomaly);
+
+        // calculate entity properties
         var position = Cesium.Cartesian3.fromDegrees(
             anomaly.longitude, 
             anomaly.latitude,
             anomaly.altitude * 0.3048); // convert to meters
-        var heading = Cesium.Math.toRadians(anomaly.heading);
+        var heading = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(anomaly.heading), 0, 0);
         var orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading)
-    
-        // - todo - add rotation! use "orientation" variable and property
-        var entity = viewer.entities.add({
-            position: position,
-            model : {
-                uri : '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
-                color: Cesium.Color.GOLD,
-                scale: anomalySize
-            }
-        });
-        
-        console.log("SPAWNED ENTITY");
-    }
 
+        /* Check if anomaly already exists, if so modify the old one.
+         Otherwise create a new one. */
+        if(!viewer.entities.getById(anomalyId)) {
+            var entity = viewer.entities.add({
+                id: anomalyId,
+                position: position,
+                orientation: orientation,
+                description: 'blablobla xD',
+                model : {
+                    uri : '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
+                    color: Cesium.Color.GOLD,
+                    scale: anomalySize
+                }
+            });
+        } else {
+            var entity = viewer.entities.getById(anomalyId);
+            entity['position'] = position;
+            entity['orientation'] = orientation;
+        }
+
+        console.log("SPAWNED ENTITY"); 
+    }
 }
+
 
