@@ -24,9 +24,15 @@ function signInFirebase(email, password) {
     .then(() => {
         console.log("User " + email + " has been authenticated");
         userId = firebase.auth().currentUser.uid;
+        dbRef = firebase.database().ref('users').child(userId);
 
         //Right when we succeed with authentication, get all anomalies
         getDataFirebase(userId);
+
+        dbRef.on('value', (snap) => {
+            getDataFirebase(userId);
+            console.log(snap.val());
+        });
     })
 }
 
