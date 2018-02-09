@@ -11,7 +11,7 @@ signInFirebase(email, password);
 // properties
 var anomalySize = 5000;
 var res = 3;
-var maxZoom = 8000000.0;
+var maxZoom = 6000000.0;
 var anomalies, dbRef;
 var newAnomalyColor = Cesium.Color.GREEN;
 var oldAnomalyColor = Cesium.Color.GOLD;
@@ -60,23 +60,18 @@ colorHandler.setInputAction((movement) => {
     }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-// -EXPERIMENTAL!- define our clock tick event listener
-/*viewer.clock.onTick.addEventListener((clock) => {
-    console.log(clock.currentTime);
-});*/
-
 /**
  * Spawns every anomaly in the 'anomalies' object based on their longitude,
  * latitude, altitude and heading.
  * @param {Object} anomalies - Object with every anomaly to spawn as property
  */
 function spawnAnomalies(anomalies) {
+    console.log("ANOMALIES TO SPAWN:");
+    console.log(anomalies);
+
     // spawn anomalies
     for(var anomalyId in anomalies) {
-        console.log(anomalies);
-        console.log("SPAWNING ENTITY:");
         var anomaly = anomalies[anomalyId];
-        console.log(anomaly);
 
         // calculate entity properties
         var position = Cesium.Cartesian3.fromDegrees(
@@ -93,6 +88,7 @@ function spawnAnomalies(anomalies) {
         /* Check if anomaly already exists, if so modify the old one.
          Otherwise create a new one. */
         if(!viewer.entities.getById(anomalyId)) {
+            console.log("SPAWNING ENTITY:");
             var entity = viewer.entities.add({
                 id: anomalyId,
                 name: anomaly.flight_id,
@@ -106,15 +102,16 @@ function spawnAnomalies(anomalies) {
                 }
             });
         } else {
+            console.log("MODIFYING ENTITY:");
             var entity = viewer.entities.getById(anomalyId);
             entity['position'] = position;
             entity['orientation'] = orientation;
-            /* -TODO- CHANGE ANOMALY COLOR WHEN REPOSITIONED?
+            /* -TODO- CHANGE ANOMALY COLOR WHEN REPOSITIONED? */
             entity['model']['color'] = newAnomalyColor;
-            */
         }
 
-        console.log("SPAWNED ENTITY"); 
+        console.log(anomaly);
+        console.log("ENTITY FINISHED"); 
     }
 }
 

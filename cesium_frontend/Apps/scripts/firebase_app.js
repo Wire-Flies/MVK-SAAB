@@ -24,26 +24,50 @@ function signInFirebase(email, password) {
     .then(() => {
         console.log("User " + email + " has been authenticated");
         userId = firebase.auth().currentUser.uid;
-        dbRef = firebase.database().ref('users').child(userId);
+        dbRef = firebase.database().ref('users').child(userId + "/anomalies");
 
         //Right when we succeed with authentication, get all anomalies
         getDataFirebase(userId);
 
-        dbRef.on('value', (snap) => {
-            getDataFirebase(userId);
-            console.log(snap.val());
+        dbRef.on('child_changed', (snap) => {
+            getDataFirebase(userId, snap.ref.key);
+            console.log("GETTING INFO:");
+            console.log(snap.ref.key);
         });
     })
 }
 
 /**
- * Retrieves all anomalies from the database and calls the spawn function
+ * Retrieves one or more anomalies from the database and calls the spawn function.
+ * If only one anomaly is wanted, enter the anomalyId. If you don't, all anomalies will be fetched.
  * @param {String} userId - User ID used in the firebase db 
+ * @param {String} anomalyId - If defined, only get the data regarding this anomaly
  */
-function getDataFirebase(userId) {
-    firebase.database().ref('/users/' + userId).once('value')
-    .then((snapshot) => {
-        spawnAnomalies(snapshot.val().anomalies);
-        console.log(snapshot.val().anomalies);
-    });
+function getDataFirebase(userId, anomalyId) {
+    anomalyId = anomalyId || null;
+    console.log("GETTING DATA FROM FIREBASE...");
+
+    // if no anomaly name was given, retrieve all anomalies
+    if(anomalyId == null) {
+        firebase.database().ref('/users/' + userId).once('value')
+        .then((snapshot) => {
+            spawnAnomalies(snapshot.val().anomalies);
+            console.log(snapshot.val().anomalies);
+        });
+    } else { // if it was given, retrieve that anomaly
+        firebase.database().ref('/users/' + userId + '/anomalies/' + anomalyId).once('value')
+        .then((snapshot) => {
+            /*
+                Didn't managed to get the anomaly object that was modified, but did manage to get
+                its attributes. Since we know the key for the anomaly (as well as its attributes),
+                we create a new object by combining them and sending it to our spawn function.
+            */
+            var anomalyObj = {};
+            anomalyObj[anomalyId] = {};
+            for (var attr in snapshot.val()) {
+                anomalyObj[anomalyId][attr] = snapshot.val()[attr]; 
+            }
+            spawnAnomalies(anomalyObj);
+        });
+    }
 }
