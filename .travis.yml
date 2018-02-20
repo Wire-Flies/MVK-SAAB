@@ -4,5 +4,7 @@ node_js:
 
 install:
   - cd backend && npm install && cd ..
+  - cd cesium_frontend && npm install && cd ..
 
 script: backend/travis_ci_runner.sh
+script: cesium_frontend/travis_ci_runner.sh
