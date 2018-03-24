@@ -1,5 +1,5 @@
 'use strict';
-const express = require("express");
+const express = require('express');
 const app = express();
 const {FirebaseConnector} = require('./firebase.js');
 
@@ -12,19 +12,31 @@ init().then(() => {
     console.log(err);
 });
 
-function initFirebase(){
+/**
+ * Initialize firebaseconnector
+ * @return {Promise} Resolved when login is sucessful
+ */
+function initFirebase() {
     return firebaseConnector.login();
 }
 
-function startApp(){
+/**
+ * Starts the express server
+ * @return {Promise} Resolved when server has started
+ */
+function startApp() {
     return new Promise((resolve, reject) => {
         app.listen(3000, '127.0.0.1', () => resolve());
     });
 }
 
-function init(){
+/**
+ * Initializes the server
+ * @return {Promise} Resolved when backend has started
+ */
+function init() {
     return Promise.all([
         initFirebase(),
-        startApp()
+        startApp(),
     ]);
 }
