@@ -3,7 +3,14 @@ const express = require('express');
 const app = express();
 const {FirebaseConnector} = require('./firebase.js');
 const {InputHandler} = require('./inputHandler');
+const RealTimePG = require('./inputSources/realTimePG.js');
+
 const CUTOFF = 0.3;
+const USERNAME = 'wireflies';
+const PASSWORD = 'wireflies';
+const HOST = 'localhost';
+const PORT = 5432;
+const DB = 'wireflies';
 
 let firebaseConnector = new FirebaseConnector();
 let inputHandler;
@@ -38,6 +45,7 @@ function startApp() {
  */
 function initInputHandler() {
     inputHandler = new InputHandler(firebaseConnector, CUTOFF);
+    inputHandler.addInputSource(new RealTimePG(1510009600, 5000, USERNAME, PASSWORD, HOST, PORT, DB));
     return new Promise((full) => full());
 }
 

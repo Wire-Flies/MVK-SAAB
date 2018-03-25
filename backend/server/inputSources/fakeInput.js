@@ -1,8 +1,6 @@
 'use strict';
 const EventEmitter = require('events');
 
-module.exports = FakeInputSource;
-
 /**
  *
  */
@@ -20,3 +18,5 @@ class FakeInputSource extends EventEmitter {
         this.emit('aircraft', {});
     }
 }
+
+module.exports = FakeInputSource;
