@@ -3,6 +3,7 @@ import numpy as np
 from keras.models import load_model
 import json
 from sklearn.metrics import mean_squared_error
+import sys
 
 app = Flask(__name__)
 
@@ -53,4 +54,4 @@ def classify():
     return json.dumps(result)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(sys.argv[1]))

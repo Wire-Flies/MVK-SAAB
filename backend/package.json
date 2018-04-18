@@ -16,7 +16,7 @@
     "sinon-stub-promise": "^4.0.0"
   },
   "scripts": {
-    "start": "AI_HOST=localhost AI_PORT=5000 node server/app.js"
+    "start": "AI_HOST=localhost AI_PORTS=5000,5001,5002,5003,5004,5005,5006,5007 node server/app.js"
   },
   "dependencies": {
     "express": "^4.16.2",
