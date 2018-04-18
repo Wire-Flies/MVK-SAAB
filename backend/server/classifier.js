@@ -25,6 +25,7 @@ function classify(plane) {
         body: JSON.stringify(plane),
         headers: headers,
     }).then((res) => res.json()).then((body) => {
-        return new Promise((resolve) => resolve(body.value));       
+        console.log(plane.flight_id + ' has anomaly value: ' + body.value);
+        return new Promise((resolve) => resolve(body.value));
     });
 }

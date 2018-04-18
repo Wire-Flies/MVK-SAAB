@@ -45,7 +45,7 @@ function startApp() {
  */
 function initInputHandler() {
     inputHandler = new InputHandler(firebaseConnector, CUTOFF);
-    inputHandler.addInputSource(new RealTimePG(1510009600, 5000, USERNAME, PASSWORD, HOST, PORT, DB));
+    inputHandler.addInputSource(new RealTimePG(1510099600, 30000, USERNAME, PASSWORD, HOST, PORT, DB));
     return new Promise((full) => full());
 }
 
