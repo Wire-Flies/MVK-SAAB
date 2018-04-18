@@ -37,7 +37,7 @@ class RealTimePG extends EventEmitter {
     nextAircraftBatch() {
         const endTime = this.time;
         const startTime = this.time - this.batchTime;
-        this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id WHERE snapshot_id < $1 AND snapshot_id >= $2;', [endTime, startTime]).then((flights) => {
+        this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN airports a ON a.iata_code = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id < $1 AND snapshot_id >= $2;', [endTime, startTime]).then((flights) => {
             let flightObj = {};
             _.forEach(flights, (flight) => {
                 if (!flightObj[flight.flight_id]) {
@@ -51,6 +51,10 @@ class RealTimePG extends EventEmitter {
                         schd_from: flight.schd_from,
                         schd_to: flight.schd_to,
                         real_to: flight.real_to,
+                        lat_from: a.latitude_deg,
+                        long_from: a.longitude_deg ,
+                        lat_to: b.latitude_deg,
+                        long_to: b.longitude_deg,
                         positions: [],
                     };
                 }
