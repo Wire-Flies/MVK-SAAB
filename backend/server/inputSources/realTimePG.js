@@ -28,7 +28,7 @@ class RealTimePG extends EventEmitter {
             connectionString: connectionString,
         });
 
-        this.intervalId = setTimeout(() => this.nextAircraftBatch(), this.batchTime);
+        setTimeout(() => this.nextAircraftBatch(), 2000);
     }
 
     /**
@@ -37,8 +37,9 @@ class RealTimePG extends EventEmitter {
     nextAircraftBatch() {
         const endTime = this.time;
         const startTime = this.time - this.batchTime;
-        console.log('SQL: ' + 'SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN airports a ON a.iata_code = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id < '+endTime+' AND snapshot_id >= '+startTime+';')
-        this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN airports a ON a.iata_code = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id < $1 AND snapshot_id >= $2;', [endTime, startTime]).then((flights) => {
+        this.time += this.batchTime;
+        console.log('SQL: ' + 'SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN airports a ON a.iata_code = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= '+endTime+' AND snapshot_id >= '+startTime+';');
+        this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN (select iata_code as iata_from, latitude_deg as lat_from, longitude_deg as long_from from airports) a ON a.iata_from = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= $1 AND snapshot_id >= $2 AND a.iata_from is not null AND b.iata_code is not null;', [endTime, startTime]).then((flights) => {
             let flightObj = {};
             console.log('Found: ' + flights.rowCount + ' flights');
             _.forEach(flights.rows, (flight) => {
@@ -53,10 +54,10 @@ class RealTimePG extends EventEmitter {
                         schd_from: flight.schd_from,
                         schd_to: flight.schd_to,
                         real_to: flight.real_to,
-                        lat_from: a.latitude_deg,
-                        long_from: a.longitude_deg ,
-                        lat_to: b.latitude_deg,
-                        long_to: b.longitude_deg,
+                        lat_from: flight.lat_from,
+                        long_from: flight.long_from,
+                        lat_to: flight.latitude_deg,
+                        long_to: flight.longitude_deg,
                         positions: [],
                     };
                 }
@@ -75,9 +76,11 @@ class RealTimePG extends EventEmitter {
             });
 
             _.forEach(flightObj, (flight) => {
-                console.log('Emitting aircraft: ', flight);
-                this.emit('aircraft', flight);
+                console.log('Emitting aircraft: ', flight.flight_id);
+                this.emit('aircraft', flight.flight_id, flight);
             });
+
+            setTimeout(() => this.nextAircraftBatch(), this.batchTime);
         }).catch((err) => console.log(err)); // Errors are ignored
     }
 }
