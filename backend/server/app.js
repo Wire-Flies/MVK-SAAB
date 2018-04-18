@@ -5,7 +5,7 @@ const {FirebaseConnector} = require('./firebase.js');
 const {InputHandler} = require('./inputHandler');
 const RealTimePG = require('./inputSources/realTimePG.js');
 
-const CUTOFF = 1.8;
+const CUTOFF = 3;
 const USERNAME = 'wireflies';
 const PASSWORD = 'wireflies';
 const HOST = 'localhost';
