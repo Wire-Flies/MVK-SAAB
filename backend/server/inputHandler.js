@@ -33,6 +33,7 @@ class InputHandler {
 function handleAircraft(flightId, cutoff, aircraft, firebase) {
     classifier.classify(aircraft).then((value) => {
         if (value > cutoff) {
+            console.log(flightId + ' is being saved to firebase as an anomaly');
             return firebase.saveData(flightId, aircraft);
         }
 

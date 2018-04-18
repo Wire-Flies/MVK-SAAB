@@ -38,7 +38,7 @@ class RealTimePG extends EventEmitter {
         const endTime = this.time;
         const startTime = this.time - this.batchTime;
         this.time += this.batchTime;
-        console.log('SQL: ' + 'SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN airports a ON a.iata_code = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= '+endTime+' AND snapshot_id >= '+startTime+';');
+        console.log('SQL: ' + 'SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN (select iata_code as iata_from, latitude_deg as lat_from, longitude_deg as long_from from airports) a ON a.iata_from = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= '+endTime+' AND snapshot_id >= '+startTime+' AND a.iata_from is not null AND b.iata_code is not null;');
         this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN (select iata_code as iata_from, latitude_deg as lat_from, longitude_deg as long_from from airports) a ON a.iata_from = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= $1 AND snapshot_id >= $2 AND a.iata_from is not null AND b.iata_code is not null;', [endTime, startTime]).then((flights) => {
             let flightObj = {};
             console.log('Found: ' + flights.rowCount + ' flights');
@@ -75,14 +75,27 @@ class RealTimePG extends EventEmitter {
                 });
             });
 
-            _.forEach(flightObj, (flight) => {
-                console.log('Emitting aircraft: ', flight.flight_id);
-                this.emit('aircraft', flight.flight_id, flight);
-            });
+            stagger(this.batchTime * 2.5 / 3, _.map(flightObj, (flight) => () => this.emit('aircraft', flight.flight_id, flight)));
 
             setTimeout(() => this.nextAircraftBatch(), this.batchTime);
         }).catch((err) => console.log(err)); // Errors are ignored
     }
+}
+
+/**
+ *
+ * @param {Number} time
+ * @param {[Function]} funcs
+ */
+function stagger(time, funcs) {
+    Promise.all(_.map(funcs, (func) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                func();
+                resolve();
+            }, Math.random() * time);
+        });
+    })).then(()=>{}).catch((err) => console.log(err));
 }
 
 module.exports = RealTimePG;

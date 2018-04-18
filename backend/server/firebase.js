@@ -38,6 +38,15 @@ class FirebaseConnector {
     saveData(flightId, snapshots) {
         return saveData(this.usr, flightId, snapshots);
     }
+
+    /**
+     * Removes all anomalies
+     *
+     * @return {Promise}
+     */
+    removeAll() {
+        return removeAll(this.usr);
+    }
 }
 
 /**
@@ -83,10 +92,24 @@ function firebaseLogin() {
  * @return {Promise}    Resolved when done saving
  */
 function saveData(usr, flightId, snapshots) {
-    return firebase.database().ref('users/' + usr + '/anomalies').push({
-        flight_ID: flightId,
-        snapShots: snapshots,
+    const position = snapshots.positions[0];
+    return firebase.database().ref('users/' + usr + '/anomalies/' + flightId).set({
+        flight_id: snapshots.flight_id,
+        altitude: position.altitude,
+        heading: position.heading,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        speed: position.speed,
+        squawk: position.squawk,
     });
+}
+
+/**
+ * @param {String} usr
+ * @return {Promise}
+ */
+function removeAll(usr) {
+    return firebase.database().ref('users/' + usr + '/anomalies').remove();
 }
 
 module.exports = {

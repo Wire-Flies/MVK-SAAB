@@ -5,7 +5,7 @@ const {FirebaseConnector} = require('./firebase.js');
 const {InputHandler} = require('./inputHandler');
 const RealTimePG = require('./inputSources/realTimePG.js');
 
-const CUTOFF = 0.3;
+const CUTOFF = 1.8;
 const USERNAME = 'wireflies';
 const PASSWORD = 'wireflies';
 const HOST = 'localhost';
@@ -27,7 +27,10 @@ init().then(() => {
  * @return {Promise} Resolved when login is sucessful
  */
 function initFirebase() {
-    return firebaseConnector.login();
+    return firebaseConnector.login().then(()=>{
+        //return new Promise((resolve) => resolve());
+        return firebaseConnector.removeAll();
+    });
 }
 
 /**
@@ -45,7 +48,7 @@ function startApp() {
  */
 function initInputHandler() {
     inputHandler = new InputHandler(firebaseConnector, CUTOFF);
-    inputHandler.addInputSource(new RealTimePG(1510099600, 30000, USERNAME, PASSWORD, HOST, PORT, DB));
+    inputHandler.addInputSource(new RealTimePG(1510099600, 15000, USERNAME, PASSWORD, HOST, PORT, DB));
     return new Promise((full) => full());
 }
 
