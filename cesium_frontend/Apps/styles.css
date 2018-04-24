@@ -11,7 +11,7 @@
     z-index: 1500;
     background: black;
     height: 100%;
-    width: 100px;
+    width: 120px;
 }
 
 ul {
@@ -25,6 +25,7 @@ ul {
     border-color: white;
     border-width: 2px;
     overflow: auto;
+    height: 100%;
 }
 
 #login {
