@@ -23,6 +23,8 @@ const newAnomalyColor = Cesium.Color.GOLD;
 const oldAnomalyColor = Cesium.Color.PINK;
 
 let clock = new Cesium.Clock();
+let animationId = null;
+let originalEntity = null;
 let currentWaypoint = 0;
 let previousWaypoint = 0;
 let amountOfWaypoints = 0;
@@ -42,6 +44,12 @@ setInterval(() => {
             }
 
             var entity = viewer.entities.getById(anomaly.flight_id);
+            if(originalEntity != null) {
+                if(originalEntity.id != entity.id && animationId != null) {
+                    Cesium.cancelAnimationFrame(animationId);
+                }
+            }
+
             console.log(entity);
             viewer.entities.remove(entity);
         }
@@ -73,16 +81,14 @@ scene.screenSpaceCameraController.enableLook = false;
 // create ellipse to show where data will be showed
 let boundaryEllipse = viewer.entities.add({
     id: "data-boundary",
-    position: center,
     name: "Data boundary",
-    ellipse: {
-        semiMinorAxis: 1000000,
-        semiMajorAxis: 1000000,
+    rectangle: {
+        coordinates: Cesium.Rectangle.fromDegrees(51, 0.1, 68.5, 35),
         material: Cesium.Color.RED.withAlpha(0.15)
     }
 });
 
-// define the entity color change on-left-click event listener
+// define the entity color change and waypoints on-left-click event listener
 entityHandler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
 entityHandler.setInputAction((movement) => {
     // remove old waypoints
@@ -90,13 +96,20 @@ entityHandler.setInputAction((movement) => {
         viewer.entities.remove(waypoints[i]);
     }
 
+    // reset animation
+    if(originalEntity != null) {
+        originalEntity['model']['color'] = oldAnomalyColor;
+    }
+    Cesium.cancelAnimationFrame(animationId);
+
     let clickedObject = scene.pick(movement.position);
     if(Cesium.defined(clickedObject) && (clickedObject.id._id !== "data-boundary")) {
         // start animation
-        Cesium.requestAnimationFrame(tick);
+        animationId = Cesium.requestAnimationFrame(tick);
 
         let entity = viewer.entities.getById(clickedObject.id._id);
         let anomaly = currentAnomalies[entity.id];
+        originalEntity = entity;
 
         currentTarget = anomaly;
         currentWaypoint = anomaly.positions[0].length - 1;
@@ -135,7 +148,7 @@ entityHandler.setInputAction((movement) => {
  */
 function tick() {
     clock.tick();
-    Cesium.requestAnimationFrame(tick);
+    animationId = Cesium.requestAnimationFrame(tick);
 
     let waypoint = viewer.entities.getById(currentWaypoint);
 
