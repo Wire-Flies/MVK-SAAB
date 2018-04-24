@@ -15,9 +15,29 @@
           width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
       }
   </style>
+  <link rel="stylesheet" type="text/css" href="styles.css" />
 </head>
 <body>
-  <div id="cesiumContainer"></div>
+  <div id="cesiumContainer">
+    <!--<div id="login">
+        <label><b>Email</b></label>
+        <input id="email" type="text" placeholder="Enter Email" required>
+
+        <label><b>Password</b></label>
+        <input id="password" type="password" placeholder="Enter Password" required>
+
+        <button id="loginbtn" type="submit">Login</button>
+    </div>-->
+    <div id="anomalies">
+      <span>Amount of new anomalies: 0</span>
+      <br/>
+      <div id="listOfAnomalies">
+        <ul>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>
   <script src="/Apps/scripts/firebase_app.js"></script>
   <script src="/Apps/scripts/app.js"></script>

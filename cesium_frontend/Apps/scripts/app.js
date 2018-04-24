@@ -13,7 +13,7 @@ signInFirebase(email, password);
 // -- CESIUM --
 // properties
 const anomalySize = 5000;
-const res = 2;
+const res = 1;
 const maxZoom = 10000000.0;
 let anomalies;
 let currentTarget = null;
@@ -21,6 +21,7 @@ let waypoints = [];
 let dbRef;
 const newAnomalyColor = Cesium.Color.GOLD;
 const oldAnomalyColor = Cesium.Color.PINK;
+let amountOfNewAnomalies = 0;
 
 let clock = new Cesium.Clock();
 let animationId = null;
@@ -35,26 +36,29 @@ setInterval(() => {
     for (anomalyId in currentAnomalies) {
         if (currentAnomalies.hasOwnProperty(anomalyId)) {
             let anomaly = currentAnomalies[anomalyId];
-            if (anomaly.hour === date.getHours() && anomaly.minutes === date.getMinutes()) {
-                // check if the anomaly that is selected is the one being removed
-                if (currentTarget != null) {
-                    if (currentTarget.id === anomaly.id) {
-                        // remove old waypoints
-                        for (let i = 0; i < waypoints.length; i++) {
-                            viewer.entities.remove(waypoints[i]);
+            if (anomaly.new === false) {
+                if (anomaly.hour === date.getHours() && anomaly.minutes === date.getMinutes()) {
+                    // check if the anomaly that is selected is the one being removed
+                    if (currentTarget != null) {
+                        if (currentTarget.id === anomaly.id) {
+                            // remove old waypoints
+                            for (let i = 0; i < waypoints.length; i++) {
+                                viewer.entities.remove(waypoints[i]);
+                            }
                         }
                     }
-                }
 
-                let entity = viewer.entities.getById(anomaly.flight_id);
-                if (originalEntity != null) {
-                    if (originalEntity.id != entity.id && animationId != null) {
-                        Cesium.cancelAnimationFrame(animationId);
+                    let entity = viewer.entities.getById(anomaly.flight_id);
+                    if (originalEntity != null) {
+                        if (originalEntity.id != entity.id && animationId != null) {
+                            Cesium.cancelAnimationFrame(animationId);
+                        }
                     }
-                }
 
-                delete currentAnomalies[anomalyId];
-                viewer.entities.remove(entity);
+                    delete currentAnomalies[anomalyId];
+                    viewer.entities.remove(entity);
+                    updateCount();
+                }
             }
         }
     }
@@ -118,14 +122,31 @@ entityHandler.setInputAction((movement) => {
         // start animation
         animationId = Cesium.requestAnimationFrame(tick);
 
+        // get the anomaly entity that was selected
         let entity = viewer.entities.getById(clickedObject.id._id);
         let anomaly = currentAnomalies[entity.id];
-        originalEntity = entity;
 
+        // check if the anomaly entity has been selected previously, if not decrease amount of new anomalies
+        if (anomaly.new === true) {
+            anomaly.new = false;
+            amountOfNewAnomalies--;
+            updateCount();
+            removeNewAnomaly(anomaly.flight_id);
+
+            // add lifespan
+            let date = new Date();
+            const modifiedDate = new Date(date.valueOf() + (minutesToAdjust * millisecondsPerMinute));
+            anomaly.hour = modifiedDate.getHours();
+            anomaly.minutes = modifiedDate.getMinutes();
+        }
+
+        // set the variables that will keep track of where we are in our animation
+        originalEntity = entity;
         currentTarget = anomaly;
         currentWaypoint = anomaly.positions[0].length - 1;
         previousWaypoint = entity;
         amountOfWaypoints = anomaly.positions[0].length - 1;
+
         // spawn waypoints for anomaly
         for (let i = 0; i < anomaly.positions[0].length; i++) {
             // calculate anomaly properties
@@ -149,7 +170,7 @@ entityHandler.setInputAction((movement) => {
             });
         }
 
-        entity['model']['color'] = oldAnomalyColor;
+       entity['model']['color'] = oldAnomalyColor;
     }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -173,6 +194,36 @@ function tick() {
 }
 
 /**
+ *  Update the amount of anomalies in our html
+ */
+function updateCount() {
+    $("#anomalies span").text("Amount of new anomalies: " + amountOfNewAnomalies);
+}
+
+/**
+ *  Add new list element to our list of new anomalies
+ * @param {Object} anomaly - Object of the anomaly we wish to put as a list element
+ */
+function addNewAnomaly(anomaly) {
+    $('#listOfAnomalies ul').append('<li>' + anomaly.flight_id + '</li>');
+}
+
+/**
+ * Remove the specific id from our list of new anomalies
+ * @param {int} id - The id of the element we wish to remove (the text it shows)
+ */
+function removeNewAnomaly(id) {
+    $('#listOfAnomalies ul').find('li:contains(' + id + ')').remove();
+}
+
+// Tries to sign the user in with given information
+$('#loginbtn').click(() => {
+    let email = $('#email').val();
+    let password = $('#password').val();
+    signInFirebase(email, password);
+})
+
+/**
  * Spawns every anomaly in the 'anomalies' object based on their longitude,
  * latitude, altitude and heading.
  * @param {Object} anomalies - Object with every anomaly to spawn as property
@@ -180,8 +231,6 @@ function tick() {
 function spawnAnomalies(anomalies) {
     console.log('ANOMALIES TO SPAWN:');
     console.log(anomalies);
-    let date = new Date();
-    const modifiedDate = new Date(date.valueOf() + (minutesToAdjust * millisecondsPerMinute));
 
     // spawn anomalies
     for (let anomalyId in anomalies) {
@@ -191,8 +240,8 @@ function spawnAnomalies(anomalies) {
 
             // add it to our local object
             currentAnomalies[anomalyId] = anomaly;
-            currentAnomalies[anomalyId].hour = modifiedDate.getHours();
-            currentAnomalies[anomalyId].minutes = modifiedDate.getMinutes();
+            currentAnomalies[anomalyId].new = true;
+            amountOfNewAnomalies++;
 
             // calculate entity properties
             let position = Cesium.Cartesian3.fromDegrees(
@@ -231,6 +280,8 @@ function spawnAnomalies(anomalies) {
                 entity['model']['color'] = newAnomalyColor;
             }
 
+            updateCount();
+            addNewAnomaly(anomaly);
             console.log(anomaly);
             console.log('ENTITY FINISHED');
         }
