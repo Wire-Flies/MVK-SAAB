@@ -19,10 +19,6 @@ function initFireBase() {
  */
 function signInFirebase(email, password) {
     firebase.auth().signInWithEmailAndPassword(email, password).then(() => {
-        // Remove HTML login components
-        //$('#login').remove();
-        //$('#anomalies').show();
-
         // Get our userid
         console.log('User ' + email + ' has been authenticated');
         userId = firebase.auth().currentUser.uid;
