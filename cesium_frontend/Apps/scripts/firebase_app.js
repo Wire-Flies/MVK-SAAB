@@ -18,10 +18,12 @@ function initFireBase() {
  * @param {String} password - Password to try
  */
 function signInFirebase(email, password) {
-    firebase.auth().signInWithEmailAndPassword(email, password).catch((error) => {
-        console.log('An error has occured during user authentication\n Error code: ' + error.code + '\n Error Message: ' + error.message);
-    })
-    .then(() => {
+    firebase.auth().signInWithEmailAndPassword(email, password).then(() => {
+        // Remove HTML login components
+        //$('#login').remove();
+        //$('#anomalies').show();
+
+        // Get our userid
         console.log('User ' + email + ' has been authenticated');
         userId = firebase.auth().currentUser.uid;
         dbRef = firebase.database().ref('users').child(userId + '/anomalies');
@@ -29,11 +31,14 @@ function signInFirebase(email, password) {
         // Right when we succeed with authentication, get all anomalies
         getDataFirebase(userId);
 
+        // Setup our event listener
         dbRef.on('child_changed', (snap) => {
             getDataFirebase(userId, snap.ref.key);
             console.log('GETTING INFO:');
             console.log(snap.ref.key);
         });
+    }).catch((error) => {
+        console.log('An error has occured during user authentication\n Error code: ' + error.code + '\n Error Message: ' + error.message);
     });
 }
 

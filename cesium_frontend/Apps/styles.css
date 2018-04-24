@@ -1,0 +1,39 @@
+
+#anomalies {
+    left: 0;
+    top: 0;
+    padding-top: 10px;
+    padding-left: 10px;
+    position: absolute;
+    color: rgb(34, 172, 87);
+    font-family: courier;
+    font-size: 12px;
+    z-index: 1500;
+    background: black;
+    height: 100%;
+    width: 100px;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 10px;
+    margin-left: 0;
+}
+
+#listOfAnomalies {
+    padding-top: 0px;
+    border-color: white;
+    border-width: 2px;
+    overflow: auto;
+}
+
+#login {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding-bottom: 15px;
+    padding-left: 15px;
+    padding-top: 15px;
+    z-index: 1500;
+    color: white;
+}
