@@ -1,6 +1,6 @@
 // -- FIREBASE --
-const email = "Saab2@blufffmail.com";
-const password = "Saab2123";
+const email = 'Saab2@blufffmail.com';
+const password = 'Saab2123';
 let userId;
 let currentAnomalies = {};
 const minutesToAdjust = 1;
@@ -13,10 +13,10 @@ signInFirebase(email, password);
 // -- CESIUM --
 // properties
 const anomalySize = 5000;
-const res = 3;
-const maxZoom = 11000000.0;
+const res = 2;
+const maxZoom = 10000000.0;
 let anomalies;
-let currentTarget;
+let currentTarget = null;
 let waypoints = [];
 let dbRef;
 const newAnomalyColor = Cesium.Color.GOLD;
@@ -32,41 +32,49 @@ let amountOfWaypoints = 0;
 // interval to check if we need to remove anomalies
 setInterval(() => {
     let date = new Date();
-    for(anomalyId in currentAnomalies) {
-        let anomaly = currentAnomalies[anomalyId]
-        console.log(anomaly)
-        if(anomaly.hour === date.getHours() && anomaly.minutes === date.getMinutes()) {
-            if (currentTarget.id === anomaly.id) {
-                // remove old waypoints
-                for (let i = 0; i < waypoints.length; i++) {
-                    viewer.entities.remove(waypoints[i]);
+    for (anomalyId in currentAnomalies) {
+        if (currentAnomalies.hasOwnProperty(anomalyId)) {
+            let anomaly = currentAnomalies[anomalyId];
+            if (anomaly.hour === date.getHours() && anomaly.minutes === date.getMinutes()) {
+                // check if the anomaly that is selected is the one being removed
+                if (currentTarget != null) {
+                    if (currentTarget.id === anomaly.id) {
+                        // remove old waypoints
+                        for (let i = 0; i < waypoints.length; i++) {
+                            viewer.entities.remove(waypoints[i]);
+                        }
+                    }
                 }
-            }
 
-            var entity = viewer.entities.getById(anomaly.flight_id);
-            if(originalEntity != null) {
-                if(originalEntity.id != entity.id && animationId != null) {
-                    Cesium.cancelAnimationFrame(animationId);
+                let entity = viewer.entities.getById(anomaly.flight_id);
+                if (originalEntity != null) {
+                    if (originalEntity.id != entity.id && animationId != null) {
+                        Cesium.cancelAnimationFrame(animationId);
+                    }
                 }
-            }
 
-            console.log(entity);
-            viewer.entities.remove(entity);
+                delete currentAnomalies[anomalyId];
+                viewer.entities.remove(entity);
+            }
         }
     }
-}, 30000)
+}, 30000);
 
+Cesium.BingMapsApi.defaultKey = null;
 // set up viewer
-var viewer = new Cesium.Viewer('cesiumContainer', {
+let viewer = new Cesium.Viewer('cesiumContainer', {
     sceneMode: Cesium.SceneMode.SCENE2D,
     sceneModePicker: false,
-    mapProjection : new Cesium.WebMercatorProjection(),
+    mapProjection: new Cesium.WebMercatorProjection(),
     homeButton: false,
     sceneModePicker: false,
     navigationHelpButton: false,
+    timeline: false,
+    animation: false,
 });
 viewer.resolutionScale = res;
 let scene = viewer.scene;
+scene.maximumAliasedLineWidth = 5.0;
 
 // remove double click feature
 viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
@@ -80,12 +88,15 @@ scene.screenSpaceCameraController.enableLook = false;
 
 // create ellipse to show where data will be showed
 let boundaryEllipse = viewer.entities.add({
-    id: "data-boundary",
-    name: "Data boundary",
+    id: 'data-boundary',
+    name: 'Data boundary',
     rectangle: {
-        coordinates: Cesium.Rectangle.fromDegrees(51, 0.1, 68.5, 35),
-        material: Cesium.Color.RED.withAlpha(0.15)
-    }
+        coordinates: Cesium.Rectangle.fromDegrees(0.1, 51, 35, 68.5),
+        height: 0,
+        fill: false,
+        outline: true,
+        outlineColor: Cesium.Color.WHITE,
+    },
 });
 
 // define the entity color change and waypoints on-left-click event listener
@@ -97,13 +108,13 @@ entityHandler.setInputAction((movement) => {
     }
 
     // reset animation
-    if(originalEntity != null) {
+    if (originalEntity != null) {
         originalEntity['model']['color'] = oldAnomalyColor;
     }
     Cesium.cancelAnimationFrame(animationId);
 
     let clickedObject = scene.pick(movement.position);
-    if(Cesium.defined(clickedObject) && (clickedObject.id._id !== "data-boundary")) {
+    if (Cesium.defined(clickedObject) && (clickedObject.id._id !== 'data-boundary')) {
         // start animation
         animationId = Cesium.requestAnimationFrame(tick);
 
@@ -117,28 +128,27 @@ entityHandler.setInputAction((movement) => {
         amountOfWaypoints = anomaly.positions[0].length - 1;
         // spawn waypoints for anomaly
         for (let i = 0; i < anomaly.positions[0].length; i++) {
-
             // calculate anomaly properties
             let position = Cesium.Cartesian3.fromDegrees(
-                anomaly.positions[0][i].longitude, 
+                anomaly.positions[0][i].longitude,
                 anomaly.positions[0][i].latitude,
                 anomaly.positions[0][i].altitude * 0.3048); // convert to meters
             let heading = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(anomaly.positions[0][i].heading + 90), 0, 0);
-            let orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading)
+            let orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading);
 
             waypoints[i] = viewer.entities.add({
                 id: i,
                 name: anomaly.flight_id,
                 position: position,
                 orientation: orientation,
-                model : {
-                    uri : '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
+                model: {
+                    uri: '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
                     color: oldAnomalyColor.withAlpha(0.5),
-                    scale: anomalySize
-                }
+                    scale: anomalySize,
+                },
             });
         }
-        console.log(currentAnomalies[entity.id]);
+
         entity['model']['color'] = oldAnomalyColor;
     }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -168,60 +178,62 @@ function tick() {
  * @param {Object} anomalies - Object with every anomaly to spawn as property
  */
 function spawnAnomalies(anomalies) {
-    console.log("ANOMALIES TO SPAWN:");
+    console.log('ANOMALIES TO SPAWN:');
     console.log(anomalies);
     let date = new Date();
-    const modifiedDate = new Date(date.valueOf() + (minutesToAdjust * millisecondsPerMinute))
+    const modifiedDate = new Date(date.valueOf() + (minutesToAdjust * millisecondsPerMinute));
 
     // spawn anomalies
-    for(let anomalyId in anomalies) {
-        let anomaly = anomalies[anomalyId];
-        console.log(anomaly.positions[0][0])
+    for (let anomalyId in anomalies) {
+        if (anomalies.hasOwnProperty(anomalyId)) {
+            let anomaly = anomalies[anomalyId];
+            console.log(anomaly.positions[0][0]);
 
-        // add it to our local object
-        currentAnomalies[anomalyId] = anomaly;
-        currentAnomalies[anomalyId].hour = modifiedDate.getHours();
-        currentAnomalies[anomalyId].minutes = modifiedDate.getMinutes();
+            // add it to our local object
+            currentAnomalies[anomalyId] = anomaly;
+            currentAnomalies[anomalyId].hour = modifiedDate.getHours();
+            currentAnomalies[anomalyId].minutes = modifiedDate.getMinutes();
 
-        // calculate entity properties
-        let position = Cesium.Cartesian3.fromDegrees(
-            anomaly.positions[0][0].longitude, 
-            anomaly.positions[0][0].latitude,
-            anomaly.positions[0][0].altitude * 0.3048); // convert to meters
-        let heading = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(anomaly.positions[0][0].heading + 90), 0, 0);
-        let orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading)
+            // calculate entity properties
+            let position = Cesium.Cartesian3.fromDegrees(
+                anomaly.positions[0][0].longitude,
+                anomaly.positions[0][0].latitude,
+                anomaly.positions[0][0].altitude * 0.3048); // convert to meters
+            let heading = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(anomaly.positions[0][0].heading + 90), 0, 0);
+            let orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading);
 
-        // fix description text
-        let description = "(latitude, longitude): (" + anomaly.positions[0][0].latitude + ", " + anomaly.positions[0][0].longitude + ")<br>Altitude: " + anomaly.positions[0][0].altitude + 
-            " feet<br>Heading: " + anomaly.positions[0][0].heading + "°<br>Speed: " + anomaly.positions[0][0].speed + " knots<br>Squawk: " + anomaly.positions[0][0].squawk + "<br>From: " + anomaly.schd_from + "<br>To: " + anomaly.schd_to;
+            // fix description text
+            let description = '(latitude, longitude): (' + anomaly.positions[0][0].latitude + ', ' + anomaly.positions[0][0].longitude + ')<br>Altitude: ' + anomaly.positions[0][0].altitude +
+                ' feet<br>Heading: ' + anomaly.positions[0][0].heading + '°<br>Speed: ' + anomaly.positions[0][0].speed + ' knots<br>Squawk: ' + anomaly.positions[0][0].squawk + '<br>From: ' + anomaly.schd_from + '<br>To: ' + anomaly.schd_to;
 
-        /* Check if anomaly already exists, if so modify the old one.
-         Otherwise create a new one. */
-        if(!viewer.entities.getById(anomalyId)) {
-            console.log("SPAWNING ENTITY:");
-            let entity = viewer.entities.add({
-                id: anomalyId,
-                name: anomaly.flight_id,
-                position: position,
-                orientation: orientation,
-                description: description,
-                model : {
-                    uri : '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
-                    color: newAnomalyColor,
-                    scale: anomalySize
-                }
-            });
-        } else {
-            console.log("MODIFYING ENTITY:");
-            let entity = viewer.entities.getById(anomalyId);
-            entity['position'] = position;
-            entity['orientation'] = orientation;
-            /* -TODO- CHANGE ANOMALY COLOR WHEN REPOSITIONED? */
-            entity['model']['color'] = newAnomalyColor;
+            /* Check if anomaly already exists, if so modify the old one.
+            Otherwise create a new one. */
+            if (!viewer.entities.getById(anomalyId)) {
+                console.log('SPAWNING ENTITY:');
+                let entity = viewer.entities.add({
+                    id: anomalyId,
+                    name: anomaly.flight_id,
+                    position: position,
+                    orientation: orientation,
+                    description: description,
+                    model: {
+                        uri: '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
+                        color: newAnomalyColor,
+                        scale: anomalySize,
+                    },
+                });
+            } else {
+                console.log('MODIFYING ENTITY:');
+                let entity = viewer.entities.getById(anomalyId);
+                entity['position'] = position;
+                entity['orientation'] = orientation;
+                /* -TODO- CHANGE ANOMALY COLOR WHEN REPOSITIONED? */
+                entity['model']['color'] = newAnomalyColor;
+            }
+
+            console.log(anomaly);
+            console.log('ENTITY FINISHED');
         }
-
-        console.log(anomaly);
-        console.log("ENTITY FINISHED"); 
     }
 }
 
