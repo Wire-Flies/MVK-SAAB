@@ -38,3 +38,11 @@ ul {
     z-index: 1500;
     color: white;
 }
+
+#search {
+    position: absolute;
+    left: 135px;
+    top: 0;
+    z-index: 1500;
+    color: white;
+}

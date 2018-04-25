@@ -106,6 +106,14 @@ let boundaryEllipse = viewer.entities.add({
 // define the entity color change and waypoints on-left-click event listener
 entityHandler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
 entityHandler.setInputAction((movement) => {
+    selectAnomaly(movement);
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+/**
+ * Called whenever an anomaly should become selected
+ * @param {object/int} input - Object or input depending on what triggered this event
+ */
+function selectAnomaly(input) {
     // remove old waypoints
     for (let i = 0; i < waypoints.length; i++) {
         viewer.entities.remove(waypoints[i]);
@@ -117,69 +125,92 @@ entityHandler.setInputAction((movement) => {
     }
     Cesium.cancelAnimationFrame(animationId);
 
-    let clickedObject = scene.pick(movement.position);
-    if (Cesium.defined(clickedObject) && (clickedObject.id._id !== 'data-boundary')) {
-        // start animation
-        animationId = Cesium.requestAnimationFrame(tick);
+    let anomaly = null;
+    let entity = null;
 
-        // get the anomaly entity that was selected
-        let entity = viewer.entities.getById(clickedObject.id._id);
-        let anomaly = currentAnomalies[entity.id];
+    // check if we got position of a click or a callsign
+    if (typeof input === 'object') {
+        let clickedObject = scene.pick(input.position);
+        if (Cesium.defined(clickedObject) && (clickedObject.id._id !== 'data-boundary')) {
+            // get the anomaly entity that was selected
+            entity = viewer.entities.getById(clickedObject.id._id);
+            anomaly = currentAnomalies[entity.id];
+        } else {
+            return;
+        }
+    } else { // incase we're only looking for a callsign
+        for (anomalyId in currentAnomalies) { // go through all anomalies to see if the callsign exists
+            if (currentAnomalies.hasOwnProperty(anomalyId)) {
+                let currentAnomaly = currentAnomalies[anomalyId];
 
-        // check if the anomaly entity has been selected previously, if not decrease amount of new anomalies
-        if (anomaly.new === true) {
-            anomaly.new = false;
-            amountOfNewAnomalies--;
-            updateCount();
-            removeNewAnomaly(anomaly.flight_id);
-
-            // add lifespan
-            let date = new Date();
-            const modifiedDate = new Date(date.valueOf() + (minutesToAdjust * millisecondsPerMinute));
-            anomaly.hour = modifiedDate.getHours();
-            anomaly.minutes = modifiedDate.getMinutes();
+                if (currentAnomaly.flight_id == input) {
+                    anomaly = currentAnomaly;
+                    entity = viewer.entities.getById(anomaly.flight_id);
+                    viewer.selectedEntity = entity;
+                }
+            }
         }
 
-        // set the variables that will keep track of where we are in our animation
-        originalEntity = entity;
-        currentTarget = anomaly;
-        currentWaypoint = anomaly.positions[0].length - 1;
-        previousWaypoint = entity;
-        amountOfWaypoints = anomaly.positions[0].length - 1;
-
-        // spawn waypoints for anomaly
-        for (let i = 0; i < anomaly.positions[0].length; i++) {
-            // calculate anomaly properties
-            let position = Cesium.Cartesian3.fromDegrees(
-                anomaly.positions[0][i].longitude,
-                anomaly.positions[0][i].latitude,
-                anomaly.positions[0][i].altitude * 0.3048); // convert to meters
-            let heading = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(anomaly.positions[0][i].heading + 90), 0, 0);
-            let orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading);
-
-            waypoints[i] = viewer.entities.add({
-                id: i,
-                name: anomaly.flight_id,
-                position: position,
-                orientation: orientation,
-                model: {
-                    uri: '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
-                    color: oldAnomalyColor.withAlpha(0.5),
-                    scale: anomalySize,
-                },
-            });
+        // return if we didn't find the callsign
+        if (anomaly === null) {
+            return;
         }
-
-       entity['model']['color'] = oldAnomalyColor;
     }
-}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    // start animation
+    animationId = Cesium.requestAnimationFrame(tick);
+
+    // check if the anomaly entity has been selected previously, if not decrease amount of new anomalies
+    if (anomaly.new === true) {
+        anomaly.new = false;
+        amountOfNewAnomalies--;
+        updateCount();
+        removeNewAnomaly(anomaly.flight_id);
+
+        // add lifespan
+        let date = new Date();
+        const modifiedDate = new Date(date.valueOf() + (minutesToAdjust * millisecondsPerMinute));
+        anomaly.hour = modifiedDate.getHours();
+        anomaly.minutes = modifiedDate.getMinutes();
+    }
+
+    // set the variables that will keep track of where we are in our animation
+    originalEntity = entity;
+    currentTarget = anomaly;
+    currentWaypoint = anomaly.positions[0].length - 1;
+    previousWaypoint = entity;
+    amountOfWaypoints = anomaly.positions[0].length - 1;
+
+    // spawn waypoints for anomaly
+    for (let i = 0; i < anomaly.positions[0].length; i++) {
+        // calculate anomaly properties
+        let position = Cesium.Cartesian3.fromDegrees(
+            anomaly.positions[0][i].longitude,
+            anomaly.positions[0][i].latitude,
+            anomaly.positions[0][i].altitude * 0.3048); // convert to meters
+        let heading = new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(anomaly.positions[0][i].heading + 90), 0, 0);
+        let orientation = Cesium.Transforms.headingPitchRollQuaternion(position, heading);
+
+        waypoints[i] = viewer.entities.add({
+            id: i,
+            name: anomaly.flight_id,
+            position: position,
+            orientation: orientation,
+            model: {
+                uri: '/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
+                color: oldAnomalyColor.withAlpha(0.5),
+                scale: anomalySize,
+            },
+        });
+    }
+
+    entity['model']['color'] = oldAnomalyColor;
+}
 
 /**
  * Called every time the cesium clock 'ticks'
  */
 function tick() {
     clock.tick();
-    animationId = Cesium.requestAnimationFrame(tick);
 
     let waypoint = viewer.entities.getById(currentWaypoint);
 
@@ -191,13 +222,15 @@ function tick() {
     } else {
         currentWaypoint--;
     }
+
+    animationId = Cesium.requestAnimationFrame(tick);
 }
 
 /**
  *  Update the amount of anomalies in our html
  */
 function updateCount() {
-    $("#anomalies span").text("Amount of new anomalies: " + amountOfNewAnomalies);
+    $('#anomalies span').text('Amount of new anomalies: ' + amountOfNewAnomalies);
 }
 
 /**
@@ -221,7 +254,14 @@ $('#loginbtn').click(() => {
     let email = $('#email').val();
     let password = $('#password').val();
     signInFirebase(email, password);
-})
+});
+
+// Searches for the anomaly after button is pressed
+$('#searchButton').click(() => {
+    let callsign = $('#searchInput').val();
+
+    selectAnomaly(callsign);
+});
 
 /**
  * Spawns every anomaly in the 'anomalies' object based on their longitude,
