@@ -58,6 +58,7 @@ setInterval(() => {
                     delete currentAnomalies[anomalyId];
                     viewer.entities.remove(entity);
                     updateCount();
+                    viewer.scene.requestRender();
                 }
             }
         }
@@ -77,6 +78,7 @@ let viewer = new Cesium.Viewer('cesiumContainer', {
     animation: false,
     fullscreenButton: false,
     geocoder: false,
+    requestRenderMode: true,
 });
 viewer.resolutionScale = res;
 let scene = viewer.scene;
@@ -111,6 +113,11 @@ entityHandler.setInputAction((movement) => {
     selectAnomaly(movement);
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
+entityHandler.setInputAction((movement) => {
+    viewer.scene.requestRender();
+    console.log("zoom")
+}, Cesium.ScreenSpaceEventType.WHEEL);
+
 /**
  * Called whenever an anomaly should become selected
  * @param {object/int} input - Object or input depending on what triggered this event
@@ -133,7 +140,12 @@ function selectAnomaly(input) {
     // check if we got position of a click or a callsign
     if (typeof input === 'object') {
         let clickedObject = scene.pick(input.position);
-        if (Cesium.defined(clickedObject) && (clickedObject.id._id !== 'data-boundary')) {
+        if (Cesium.defined(clickedObject)) {
+            if (clickedObject.id._id === 'data-boundary') { // we don't allow the user to select the
+                viewer.selectedEntity = null;
+                return;
+            }
+
             // get the anomaly entity that was selected
             entity = viewer.entities.getById(clickedObject.id._id);
             anomaly = currentAnomalies[entity.id];
@@ -225,6 +237,8 @@ function tick() {
         currentWaypoint--;
     }
 
+    viewer.scene.requestRender();
+    console.log("render");
     animationId = Cesium.requestAnimationFrame(tick);
 }
 
@@ -317,6 +331,7 @@ function spawnAnomalies(anomalies) {
 
             updateCount();
             addNewAnomaly(anomaly);
+            viewer.scene.requestRender();
             console.log(anomaly);
             console.log('ENTITY FINISHED');
         }
