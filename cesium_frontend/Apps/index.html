@@ -33,6 +33,29 @@
       <br/>
       <span id="error" hidden>Anomaly not found</span>
     </div>
+    <div id="settings">
+      <p><b>Settings</b></p>
+      <label>Anomaly lifespan</label>
+      <select id="lifespan">
+        <option value="1">1 minute(s)</option>
+        <option value="2">2 minute(s)</option>
+        <option value="3">3 minute(s)</option>
+        <option value="4">4 minute(s)</option>
+      </select>
+      <br/>
+      <label>Show data-boundary</label>
+      <input id="boundary" type="checkbox" checked/>
+      <br/>
+      <label>Animation speed</label>
+      <select id="speed">
+          <option value="1">1.00x</option>
+          <option value="2">0.50x</option>
+          <option value="4">0.25x</option>
+          <option value="10">0.10x</option>
+          <option value="50">0.05x</option>
+          <option value="100">0.01x</option>
+      </select>
+    </div>
   </div>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>

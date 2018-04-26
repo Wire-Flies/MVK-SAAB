@@ -3,7 +3,7 @@ const email = 'Saab2@blufffmail.com';
 const password = 'Saab2123';
 let userId;
 let currentAnomalies = {};
-const minutesToAdjust = 1;
+let minutesToAdjust = 1;
 const millisecondsPerMinute = 60000;
 
 // initiate firebase connection
@@ -23,12 +23,14 @@ const newAnomalyColor = Cesium.Color.GOLD;
 const oldAnomalyColor = Cesium.Color.PINK;
 let amountOfNewAnomalies = 0;
 
-let clock = new Cesium.Clock();
 let animationId = null;
 let originalEntity = null;
 let currentWaypoint = 0;
 let previousWaypoint = 0;
 let amountOfWaypoints = 0;
+
+let frame = 0;
+let frameCap = 0;
 
 // interval to check if we need to remove anomalies
 setInterval(() => {
@@ -95,7 +97,7 @@ scene.screenSpaceCameraController.maximumZoomDistance = maxZoom;
 scene.screenSpaceCameraController.enableLook = false;
 
 // create ellipse to show where data will be showed
-let boundaryEllipse = viewer.entities.add({
+let boundaryRectangle = viewer.entities.add({
     id: 'data-boundary',
     name: 'Data boundary',
     rectangle: {
@@ -132,6 +134,7 @@ function selectAnomaly(input) {
         originalEntity['model']['color'] = oldAnomalyColor;
     }
     Cesium.cancelAnimationFrame(animationId);
+    frame = 0;
 
     let anomaly = null;
     let entity = null;
@@ -226,20 +229,24 @@ function selectAnomaly(input) {
  * Called every time the cesium clock 'ticks'
  */
 function tick() {
-    clock.tick();
-
-    let waypoint = viewer.entities.getById(currentWaypoint);
-
-    previousWaypoint['model']['color'] = oldAnomalyColor.withAlpha(0.5);
-    waypoint['model']['color'] = oldAnomalyColor;
-    previousWaypoint = waypoint;
-    if (currentWaypoint == 0) {
-        currentWaypoint = amountOfWaypoints;
+    if (frame != frameCap) {
+        frame++;
     } else {
-        currentWaypoint--;
+        let waypoint = viewer.entities.getById(currentWaypoint);
+
+        previousWaypoint['model']['color'] = oldAnomalyColor.withAlpha(0.5);
+        waypoint['model']['color'] = oldAnomalyColor;
+        previousWaypoint = waypoint;
+        if (currentWaypoint == 0) {
+            currentWaypoint = amountOfWaypoints;
+        } else {
+            currentWaypoint--;
+        }
+
+        frame = 0;
+        viewer.scene.requestRender();
     }
 
-    viewer.scene.requestRender();
     animationId = Cesium.requestAnimationFrame(tick);
 }
 
@@ -271,6 +278,28 @@ $('#searchButton').click(() => {
     let callsign = $('#searchInput').val();
 
     selectAnomaly(callsign);
+});
+
+// Change lifespan of anomaly entities if lifespan select is changed
+$('#lifespan').change(() => {
+    minutesToAdjust = $('#lifespan option:selected').val();
+});
+
+// Change animation speed if animation speed select is changed
+$('#speed').change(() => {
+    frameCap = $('#speed').val();
+    frame = 0;
+});
+
+// Change boundary alpha depending on if user wants to show it or not
+$('#boundary').change(() => {
+    if ($('#boundary').is(':checked')) {
+        boundaryRectangle['rectangle']['outline'] = true;
+    } else {
+        boundaryRectangle['rectangle']['outline'] = false;
+    }
+
+    viewer.scene.requestRender();
 });
 
 /**
