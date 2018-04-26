@@ -166,7 +166,10 @@ function selectAnomaly(input) {
 
         // return if we didn't find the callsign
         if (anomaly === null) {
+            $('#error').show();
             return;
+        } else {
+            $('#error').hide();
         }
     }
     // start animation
