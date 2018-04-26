@@ -135,6 +135,7 @@ function selectAnomaly(input) {
     }
     Cesium.cancelAnimationFrame(animationId);
     frame = 0;
+    viewer.scene.requestRender();
 
     let anomaly = null;
     let entity = null;
