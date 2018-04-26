@@ -42,7 +42,12 @@ ul {
 #search {
     position: absolute;
     left: 135px;
-    top: 0;
+    top: 5px;
     z-index: 1500;
     color: white;
+}
+
+#error {
+    padding-left: 2px;
+    color: red;
 }
