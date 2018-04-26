@@ -115,7 +115,6 @@ entityHandler.setInputAction((movement) => {
 
 entityHandler.setInputAction((movement) => {
     viewer.scene.requestRender();
-    console.log("zoom")
 }, Cesium.ScreenSpaceEventType.WHEEL);
 
 /**
@@ -238,7 +237,6 @@ function tick() {
     }
 
     viewer.scene.requestRender();
-    console.log("render");
     animationId = Cesium.requestAnimationFrame(tick);
 }
 
