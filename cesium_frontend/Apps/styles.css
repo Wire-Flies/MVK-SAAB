@@ -51,3 +51,11 @@ ul {
     padding-left: 2px;
     color: red;
 }
+
+#settings {
+    position: absolute;
+    right: 10px;
+    top: 200px;
+    z-index: 1500;
+    color: white;
+}
