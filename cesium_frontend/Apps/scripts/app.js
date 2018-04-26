@@ -75,6 +75,8 @@ let viewer = new Cesium.Viewer('cesiumContainer', {
     navigationHelpButton: false,
     timeline: false,
     animation: false,
+    fullscreenButton: false,
+    geocoder: false,
 });
 viewer.resolutionScale = res;
 let scene = viewer.scene;
@@ -248,13 +250,6 @@ function addNewAnomaly(anomaly) {
 function removeNewAnomaly(id) {
     $('#listOfAnomalies ul').find('li:contains(' + id + ')').remove();
 }
-
-// Tries to sign the user in with given information
-$('#loginbtn').click(() => {
-    let email = $('#email').val();
-    let password = $('#password').val();
-    signInFirebase(email, password);
-});
 
 // Searches for the anomaly after button is pressed
 $('#searchButton').click(() => {
