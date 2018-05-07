@@ -1,7 +1,10 @@
-// -- FIREBASE --
+const minutesToAdjust = 1;
+const millisecondsPerMinute = 60000;
+//const email = ;
+//const password = ;
 const email = 'Saab2@blufffmail.com';
 const password = 'Saab2123';
-let userId;
+
 
 // initiate firebase connection
 initFireBase();
@@ -14,8 +17,24 @@ let res = 3;
 let maxZoom = 6000000.0;
 let anomalies;
 let dbRef;
-let newAnomalyColor = Cesium.Color.GREEN;
-let oldAnomalyColor = Cesium.Color.GOLD;
+let newAnomalyColor = Cesium.Color.GOLD;
+let oldAnomalyColor = Cesium.Color.PINK;
+
+// interval to check if we need to remove anomalies
+setInterval(() => {
+    let date = new Date();
+    for (anomalyId in currentAnomalies) {
+        if (currentAnomalies.hasOwnProperty(anomalyId)) {
+            let anomaly = currentAnomalies[anomalyId];
+            console.log(anomaly);
+            if (anomaly.hour === date.getHours() && anomaly.minutes === date.getMinutes()) {
+                let entity = viewer.entities.getById(anomaly.flight_id);
+                console.log(entity);
+                viewer.entities.remove(entity);
+            }
+        }
+    }
+}, 30000);
 
 // set up viewer
 let viewer = new Cesium.Viewer('cesiumContainer', {

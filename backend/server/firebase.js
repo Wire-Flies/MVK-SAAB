@@ -95,12 +95,20 @@ function saveData(usr, flightId, snapshots) {
     const position = snapshots.positions[0];
     return firebase.database().ref('users/' + usr + '/anomalies/' + flightId).set({
         flight_id: snapshots.flight_id,
-        altitude: position.altitude,
-        heading: position.heading,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        speed: position.speed,
-        squawk: position.squawk,
+        //altitude: position.altitude,
+        //heading: position.heading,
+        //latitude: position.latitude,
+        //longitude: position.longitude,
+        //speed: position.speed,
+        //squawk: position.squawk,
+        callsign: snapshots.callsign,
+        positions: [snapshots.positions],
+        schd_to: snapshots.schd_to,
+        schd_from: snapshots.schd_from,
+        lat_from: snapshots.lat_from,
+        long_from: snapshots.long_from,
+        lat_to: snapshots.lat_to,
+        long_to: snapshots.long_to,
     });
 }
 

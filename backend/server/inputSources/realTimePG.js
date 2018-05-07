@@ -39,7 +39,7 @@ class RealTimePG extends EventEmitter {
         const startTime = this.time - this.batchTime;
         this.time += this.batchTime;
         console.log('SQL: ' + 'SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN (select iata_code as iata_from, latitude_deg as lat_from, longitude_deg as long_from from airports) a ON a.iata_from = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= '+endTime+' AND snapshot_id >= '+startTime+' AND a.iata_from is not null AND b.iata_code is not null;');
-        this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN (select iata_code as iata_from, latitude_deg as lat_from, longitude_deg as long_from from airports) a ON a.iata_from = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE snapshot_id <= $1 AND snapshot_id >= $2 AND a.iata_from is not null AND b.iata_code is not null;', [endTime, startTime]).then((flights) => {
+        this.pool.query('SELECT * FROM flights JOIN flight_data ON flights.flight_id = flight_data.flight_id INNER JOIN (select iata_code as iata_from, latitude_deg as lat_from, longitude_deg as long_from from airports) a ON a.iata_from = flights.schd_from INNER JOIN airports b ON b.iata_code = flights.schd_to WHERE lat_from IS NOT NULL AND long_from IS NOT NULL AND latitude_deg IS NOT NULL AND longitude_deg IS NOT NULL AND snapshot_id <= $1 AND snapshot_id >= $2 AND a.iata_from is not null AND b.iata_code is not null;', [endTime, startTime]).then((flights) => {
             let flightObj = {};
             console.log('Found: ' + flights.rowCount + ' flights');
             _.forEach(flights.rows, (flight) => {
@@ -61,6 +61,7 @@ class RealTimePG extends EventEmitter {
                         positions: [],
                     };
                 }
+                //console.log('FLIGHT: ', flightObj[flight.flight_id]);
 
                 flightObj[flight.flight_id].positions.push({
                     id: flight.id,
