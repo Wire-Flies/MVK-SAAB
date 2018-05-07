@@ -160,7 +160,7 @@ function selectAnomaly(input) {
             if (currentAnomalies.hasOwnProperty(anomalyId)) {
                 let currentAnomaly = currentAnomalies[anomalyId];
 
-                if (currentAnomaly.flight_id == input) {
+                if (currentAnomaly.callsign == input) {
                     anomaly = currentAnomaly;
                     entity = viewer.entities.getById(anomaly.flight_id);
                     viewer.selectedEntity = entity;
@@ -184,7 +184,7 @@ function selectAnomaly(input) {
         anomaly.new = false;
         amountOfNewAnomalies--;
         updateCount();
-        removeNewAnomaly(anomaly.flight_id);
+        removeNewAnomaly(anomaly.callsign);
 
         // add lifespan
         let date = new Date();
@@ -263,7 +263,7 @@ function updateCount() {
  * @param {Object} anomaly - Object of the anomaly we wish to put as a list element
  */
 function addNewAnomaly(anomaly) {
-    $('#listOfAnomalies ul').append('<li>' + anomaly.flight_id + '</li>');
+    $('#listOfAnomalies ul').append('<li>' + anomaly.callsign + '</li>');
 }
 
 /**
@@ -341,7 +341,7 @@ function spawnAnomalies(anomalies) {
                 console.log('SPAWNING ENTITY:');
                 let entity = viewer.entities.add({
                     id: anomalyId,
-                    name: anomaly.flight_id,
+                    name: anomaly.callsign,
                     position: position,
                     orientation: orientation,
                     description: description,
