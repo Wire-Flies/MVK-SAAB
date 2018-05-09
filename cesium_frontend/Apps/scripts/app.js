@@ -271,7 +271,7 @@ function addNewAnomaly(anomaly) {
  * @param {int} id - The id of the element we wish to remove (the text it shows)
  */
 function removeNewAnomaly(id) {
-    $('#listOfAnomalies ul').find('li:contains(' + id + ')').remove();
+    let items = $('#listOfAnomalies ul').find('li:contains(' + id + ')').remove();
 }
 
 // Searches for the anomaly after button is pressed
@@ -322,6 +322,11 @@ function spawnAnomalies(anomalies) {
             currentAnomalies[anomalyId] = anomaly;
             currentAnomalies[anomalyId].new = true;
             amountOfNewAnomalies++;
+
+            // check if callsign is undefined
+            if (currentAnomalies[anomalyId].callsign == '') {
+                currentAnomalies[anomalyId].callsign = 'undefined';
+            }
 
             // calculate entity properties
             let position = Cesium.Cartesian3.fromDegrees(
